@@ -41,6 +41,8 @@ DallasTemperature sensors(&oneWire);
 
 //Objects for captive portal/MQTT
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
+
 ESPEasyCfg captivePortal(&server, "Temperature Monitor");
 //Custom application parameters
 ESPEasyCfgParameterGroup mqttParamGrp("MQTT");
@@ -49,6 +51,10 @@ ESPEasyCfgParameter<String> mqttUser("mqttUser", "MQTT username", "homeassistant
 ESPEasyCfgParameter<String> mqttPass("mqttPass", "MQTT password", "");
 ESPEasyCfgParameter<int> mqttPort("mqttPort", "MQTT port", 1883);
 ESPEasyCfgParameter<String> mqttName("mqttName", "MQTT name", "TempMon");
+
+//Event driven parameters
+const unsigned long eventPostingInterval = 1000L;  // Delay between updates, in milliseconds
+static unsigned long lastEventPostTime = 0;        // Last time you sent to the server, in milliseconds
 
 //MQTT objects
 WiFiClient espClient;                               // TCP client
@@ -62,8 +68,11 @@ MQTTConState mqttState = MQTTConState::Disconnected;
 
 //Shared variables
 float minTemp = 0.0f;
+float minDispTemp = 0.0f;
 float maxTemp = 0.0f;
+float maxDispTemp = 0.0f;
 float actualTemp = 0.0f;
+float lastDispTemp = 0.0f;
 
 uint16_t temperatureBox[] = {0,0,0,0};
 uint16_t temperatureMinBox[] = {0,0,0,0};
@@ -71,7 +80,6 @@ uint16_t temperatureMaxBox[] = {0,0,0,0};
 uint16_t infoBox[] = {0,0,0,0};
 
 uint32_t lastUpdate = 0;
-float lastDispTemp = 0.0f;
 bool updateState = false;
 bool previousButtonB = false;
 bool showInfo = false;
@@ -362,19 +370,23 @@ void setup()
     });
   server.serveStatic("/monitor.html", SPIFFS, "/monitor.html")
         .setCacheControl("public, max-age=31536000").setLastModified("Mon, 04 Mar 2019 07:00:00 GMT");
+
+  server.addHandler(&events);
 }
 
 void publishValuesToMQTT(){
-  StaticJsonDocument<210> root;
-  root["temperature"] = actualTemp;
-  root["temperatureMin"] = minTemp;
-  root["temperatureMax"] = maxTemp;
   //Publish to MQTT clients
   if(client.connected()){
     String msg;
-    serializeJson(root, msg);
+    publishValuesToJSON(msg);
     client.publish(mqttService, msg.c_str());
   }
+}
+
+void publishValuesToEvents(){
+  String msg;
+  publishValuesToJSON(msg);
+  events.send(msg.c_str(),"value",millis());
 }
 
 void reconnect() {
@@ -441,16 +453,20 @@ void loop()
         return;
       }
       actualTemp = temperature;
-      if(((actualTemp<minTemp) && (abs(minTemp-actualTemp) >= 1.0f))
-        || (lastUpdate == 0)){
+      if((actualTemp<minTemp) || (lastUpdate == 0)){
           //First update or min changed enough to be refreshed
-          temperatureMinDisplay();
+          if(abs(minDispTemp-actualTemp) >= 1.0f){
+            temperatureMinDisplay();
+            minDispTemp = actualTemp;
+          }
           minTemp = actualTemp;
       }
-      if(((actualTemp>maxTemp) && (abs(maxTemp-actualTemp) >= 1.0f))
-        || (lastUpdate == 0)){
+      if((actualTemp>maxTemp) || (lastUpdate == 0)){
           //First update or max changed enough to be refreshed
-          temperatureMaxDisplay();
+          if(abs(maxDispTemp-actualTemp) >= 1.0f){
+            temperatureMaxDisplay();
+            maxDispTemp = actualTemp;
+          }
           maxTemp = actualTemp;
       }
       if((abs(actualTemp - lastDispTemp) >= 0.1f)
@@ -483,6 +499,12 @@ void loop()
           lastPostTime = now;
         }
       }
+  }
+
+  //Event listeners
+  if((now-lastEventPostTime)>eventPostingInterval){
+    publishValuesToEvents();
+    lastEventPostTime = now;
   }
 
   bool btnState = digitalRead(BUTTON_B);

@@ -32,7 +32,6 @@
 		}
 
 		.highcharts-figure, .highcharts-data-table table {
-			width: 600px;
 			margin: 0 auto;
 		}
 
@@ -157,21 +156,10 @@
 			}
 		}]
 	}));
-	myAjax = function() {$.ajax('/values',
-		{
-			crossDomain: true,
-			//Hack, remove me
-			beforeSend: function(xhr){
-				if (xhr.overrideMimeType)
-				{
-				  xhr.overrideMimeType("application/json");
-				}
-			  },
-			dataType: 'json', // type of response data
-			timeout: 30000,     // timeout milliseconds
-			success: function (data,status,xhr) {
-				// Speed
-				var point,
+	var evtSource = new EventSource("/events");
+	evtSource.addEventListener("value", function(e) {
+	  var data = JSON.parse(e.data);
+	  var point,
 					newVal,
 					inc;
 
@@ -179,15 +167,8 @@
 					point = chartTemperature.series[0].points[0];					
 					chartTemperature.yAxis[0].setExtremes(data.temperatureMin, data.temperatureMax);
 					point.update(data.temperature);					
-				}				
-			},
-			error: function (jqXhr, textStatus, errorMessage) { // error callback 			
-				console.error('Error: ' + errorMessage);				
-			}
-		})}
-		// Bring life to the dials
-	setInterval(myAjax
-		, 2000);
+				}
+	}, false);
 	
 	</script>
   </body>
