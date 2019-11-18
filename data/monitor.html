@@ -12,62 +12,11 @@
 	<script src="https://code.highcharts.com/modules/exporting.js"></script>
 	<script src="https://code.highcharts.com/modules/export-data.js"></script>
 	<script src="https://code.highcharts.com/modules/accessibility.js"></script>
-	<style>
-		.highcharts-figure .chart-container {
-			width: 300px;
-			height: 200px;
-			float: left;
-		}
-
-		@media (max-width: 600px) {
-			.highcharts-figure {
-				width: 100%;
-			}
-			.highcharts-figure .chart-container {
-				width: 300px;
-				float: none;
-				margin: 0 auto;
-			}
-
-		}
-
-		.highcharts-figure, .highcharts-data-table table {
-			margin: 0 auto;
-		}
-
-		.highcharts-data-table table {
-			font-family: Verdana, sans-serif;
-			border-collapse: collapse;
-			border: 1px solid #EBEBEB;
-			margin: 10px auto;
-			text-align: center;
-			width: 100%;
-			max-width: 500px;
-		}
-		.highcharts-data-table caption {
-			padding: 1em 0;
-			font-size: 1.2em;
-			color: #555;
-		}
-		.highcharts-data-table th {
-			font-weight: 600;
-			padding: 0.5em;
-		}
-		.highcharts-data-table td, .highcharts-data-table th, .highcharts-data-table caption {
-			padding: 0.5em;
-		}
-		.highcharts-data-table thead tr, .highcharts-data-table tr:nth-child(even) {
-			background: #f8f8f8;
-		}
-		.highcharts-data-table tr:hover {
-			background: #f1f7ff;
-		}
-	</style>
   </head>
   <body>
-	<figure class="highcharts-figure">
-		<div id="container-temperature" class="chart-container"></div>
-	</figure>
+	<div>
+		<div id="container-temperature"></div>
+	</div>
 	<script>
 	var gaugeOptions = {
 		chart: {
@@ -77,8 +26,8 @@
 		title: null,
 
 		pane: {
-			center: ['50%', '85%'],
-			size: '140%',
+			center: ['50%', '50%'],
+			size: '100%',
 			startAngle: -90,
 			endAngle: 90,
 			background: {
@@ -110,7 +59,7 @@
 			minorTickInterval: null,
 			tickAmount: 2,
 			title: {
-				y: -70
+				y: 0
 			},
 			labels: {
 				y: 16

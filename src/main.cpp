@@ -46,7 +46,7 @@ AsyncEventSource events("/events");
 ESPEasyCfg captivePortal(&server, "Temperature Monitor");
 //Custom application parameters
 ESPEasyCfgParameterGroup mqttParamGrp("MQTT");
-ESPEasyCfgParameter<String> mqttServer("mqttServer", "MQTT server", "server.local");
+ESPEasyCfgParameter<String> mqttServer("mqttServer", "MQTT server", "");
 ESPEasyCfgParameter<String> mqttUser("mqttUser", "MQTT username", "homeassistant");
 ESPEasyCfgParameter<String> mqttPass("mqttPass", "MQTT password", "");
 ESPEasyCfgParameter<int> mqttPort("mqttPort", "MQTT port", 1883);
